@@ -49,9 +49,6 @@ export default function Header({ variant = "default" }: HeaderProps) {
         </div>
 
         <div className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
-          <a href="#platforms" className="transition hover:text-slate-900">
-            Platforms
-          </a>
           <a href="#features" className="transition hover:text-slate-900">
             Why Us
           </a>

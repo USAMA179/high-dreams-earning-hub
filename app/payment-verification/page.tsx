@@ -1,8 +1,9 @@
 ﻿"use client";
 
+import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { addDoc, collection, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
@@ -21,6 +22,7 @@ export default function PaymentVerificationPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
     paymentMethod: paymentConfig.paymentMethod,
     amount: paymentConfig.amount,
@@ -33,18 +35,41 @@ export default function PaymentVerificationPage() {
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    let unsubscribeSnapshot: (() => void) | undefined;
+    const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         router.push("/login");
+        return;
       }
+
+      if (!firestore) {
+        setIsLoading(false);
+        return;
+      }
+
+      const userRef = doc(firestore, "users", user.uid);
+      unsubscribeSnapshot = onSnapshot(userRef, (snapshot) => {
+        if (!snapshot.exists()) {
+          return;
+        }
+
+        const userData = snapshot.data();
+        if (userData.paymentStatus === "Approved") {
+          router.push("/dashboard");
+        }
+      });
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribeAuth();
+      unsubscribeSnapshot?.();
+    };
   }, [router]);
 
   useEffect(() => {
     const loadSettings = async () => {
       if (!firestore) {
+        setIsLoading(false);
         return;
       }
 
@@ -57,9 +82,11 @@ export default function PaymentVerificationPage() {
           tillId: data.tillId || paymentConfig.tillId,
         });
       }
+
+      setIsLoading(false);
     };
 
-    loadSettings();
+    void loadSettings();
   }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -99,7 +126,7 @@ export default function PaymentVerificationPage() {
         createdAt: serverTimestamp(),
       });
 
-      setMessage("✅ Payment request submitted successfully. Your payment is under review.");
+      setMessage("Your payment verification is pending.");
       setTransactionId("");
     } catch (submitError: unknown) {
       const message = submitError instanceof Error ? submitError.message : "Unable to submit payment verification. Please try again.";
@@ -140,6 +167,15 @@ export default function PaymentVerificationPage() {
                   <div className="rounded-3xl bg-white p-6 shadow-sm shadow-slate-200/40">
                     <p className="text-sm font-semibold uppercase tracking-[0.35em] text-indigo-600">Till ID</p>
                     <p className="mt-4 text-xl font-semibold text-slate-950">{paymentSettings.tillId}</p>
+                    <div className="mt-6 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-50">
+                      <Image
+                        src="/scan.jpeg"
+                        alt="Scan QR code"
+                        width={500}
+                        height={400}
+                        className="h-auto w-full object-cover"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -165,10 +201,10 @@ export default function PaymentVerificationPage() {
 
                     <button
                       type="submit"
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isLoading}
                       className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-sky-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/20 transition hover:from-indigo-700 hover:to-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {isSubmitting ? "Submitting..." : "Submit Payment"}
+                      {isSubmitting ? "Submitting..." : isLoading ? "Loading..." : "Submit Payment"}
                     </button>
 
                     {message ? (

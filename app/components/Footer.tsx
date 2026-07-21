@@ -12,7 +12,6 @@
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-900">Quick Links</p>
             <ul className="mt-6 space-y-3 text-sm text-slate-600">
-              <li><a href="#platforms" className="transition hover:text-slate-900">Platforms</a></li>
               <li><a href="#features" className="transition hover:text-slate-900">Why Us</a></li>
               <li><a href="#testimonials" className="transition hover:text-slate-900">Testimonials</a></li>
             </ul>

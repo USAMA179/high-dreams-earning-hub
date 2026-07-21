@@ -1,9 +1,9 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, firestore } from "../../lib/firebase";
 import Header from "../components/Header";
@@ -19,6 +19,26 @@ export default function LoginPage() {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
   };
+
+  useEffect(() => {
+    if (!auth) {
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user || !firestore) {
+        return;
+      }
+
+      const userDoc = await getDoc(doc(firestore, "users", user.uid));
+      if (userDoc.exists()) {
+        const status = userDoc.data().paymentStatus;
+        router.replace(status === "Approved" ? "/dashboard" : "/payment-verification");
+      }
+    });
+
+    return unsubscribe;
+  }, [router]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

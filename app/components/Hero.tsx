@@ -21,8 +21,8 @@ export default function Hero() {
               <Link href="/signup" className="inline-flex items-center justify-center rounded-full bg-slate-950 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 transition hover:bg-slate-800">
                 Start Earning Today
               </Link>
-              <Link href="#platforms" className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-8 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900">
-                View Demo
+              <Link href="#features" className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-8 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:text-slate-900">
+                Explore Benefits
               </Link>
             </div>
             <div className="mt-14 grid gap-6 sm:grid-cols-3">
